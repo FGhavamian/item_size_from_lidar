@@ -112,4 +112,12 @@ if __name__ == "__main__":
 
     bbox_item = run(args.item_file_path, args.floor_file_path, visualize=True)
 
-    print(bbox_item)
+    size = (
+        int(abs(bbox_item.max_bound[0] - bbox_item.min_bound[0])),
+        int(abs(bbox_item.max_bound[1] - bbox_item.min_bound[1])),
+        int(
+            abs(bbox_item.max_bound[2] - bbox_item.min_bound[2]),
+        ),
+    )
+
+    print(f"Item size: {size[0]} x {size[1]} x {size[2]} [mm]")
