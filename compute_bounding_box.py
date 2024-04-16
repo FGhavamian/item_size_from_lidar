@@ -48,7 +48,7 @@ def remove_outliers(pcd, nb_neighbors, std_ratio):
     return inlier_cloud
 
 
-def run(item_pcd_file_path, floor_pcd_file_path, visualize=False):
+def run(item_pcd_file_path, floor_pcd_file_path, visualize):
 
     # Lidar data is assumed to have been saved in a csv format.
     # This might not be the case during production where data is directly fed to the algorithm.
