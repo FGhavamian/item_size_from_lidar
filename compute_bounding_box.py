@@ -23,6 +23,10 @@ def remove_low_confidence(df_pcd, threshold_conf):
     return df_pcd[df_pcd["conf"] > threshold_conf]
 
 
+def remove_starting_points_in_z_dir(df_pcd):
+    return df_pcd.query("z > 5")
+
+
 def convert_to_pcd(np_pcd):
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(np_pcd)
@@ -75,6 +79,9 @@ def run(item_pcd_file_path, floor_pcd_file_path, visualize):
     item = remove_low_confidence(item, THRESHOLD_CONF)
     floor = remove_low_confidence(floor, THRESHOLD_CONF)
 
+    item = remove_starting_points_in_z_dir(item)
+    floor = remove_starting_points_in_z_dir(floor)
+
     # This convertion is required to use open3d library
     item_pcd = convert_to_pcd(item[["x", "y", "z"]].values)
     floor_pcd = convert_to_pcd(floor[["x", "y", "z"]].values)
@@ -114,9 +121,10 @@ def run(item_pcd_file_path, floor_pcd_file_path, visualize):
         item_pcd.paint_uniform_color([1, 0.1, 0.1])
         floor_pcd.paint_uniform_color([0.1, 1, 0.1])
 
-        axis = o3d.geometry.TriangleMesh.create_coordinate_frame(
-            size=50, origin=bbox_floor.max_bound
-        )
+        origin = bbox_floor.max_bound
+        origin = (0, 0, 0)
+
+        axis = o3d.geometry.TriangleMesh.create_coordinate_frame(size=50, origin=origin)
 
         o3d.visualization.draw_geometries(
             [item_pcd, floor_pcd, bbox_item, bbox_floor, axis]
