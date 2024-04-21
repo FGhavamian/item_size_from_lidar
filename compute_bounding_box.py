@@ -7,15 +7,20 @@ import open3d as o3d
 
 
 THRESHOLD_DISTANCE = 10
+THRESHOLD_CONF = 150
 NB_NEIGHBORS = 20
 STD_RATIO = 0.05
 
 
 def read_data_from_csv(item_pcd_file_path, floor_pcd_file_path):
-    item = pd.read_csv(item_pcd_file_path, index_col=0)[["x", "y", "z"]]
+    item = pd.read_csv(item_pcd_file_path, index_col=0)
     floor = pd.read_csv(floor_pcd_file_path, index_col=0)
 
-    return item.values, floor.values
+    return item, floor
+
+
+def remove_low_confidence(df_pcd, threshold_conf):
+    return df_pcd[df_pcd["conf"] > threshold_conf]
 
 
 def convert_to_pcd(np_pcd):
@@ -65,9 +70,14 @@ def run(item_pcd_file_path, floor_pcd_file_path, visualize):
     # Floor data is however going to remain constant and can be read from a csv file
     item, floor = read_data_from_csv(item_pcd_file_path, floor_pcd_file_path)
 
+    # the lidar device assigns a confidence level to each point. The density of these values
+    # are mostly greater than 200.
+    item = remove_low_confidence(item, THRESHOLD_CONF)
+    floor = remove_low_confidence(floor, THRESHOLD_CONF)
+
     # This convertion is required to use open3d library
-    item_pcd = convert_to_pcd(item)
-    floor_pcd = convert_to_pcd(floor)
+    item_pcd = convert_to_pcd(item[["x", "y", "z"]].values)
+    floor_pcd = convert_to_pcd(floor[["x", "y", "z"]].values)
 
     # The idea to is that a part of the item point cloud is actually the floor.
     # We find those points that are close to the point cloud of the floor, and separate them.
@@ -77,10 +87,12 @@ def run(item_pcd_file_path, floor_pcd_file_path, visualize):
     item_pcd, floor_pcd = remove_floor(item_pcd, floor_pcd, THRESHOLD_DISTANCE)
 
     # There are points that are clearly outliers. We remove them using a statistical method (using z-score).
-    # item_pcd = remove_outliers(item_pcd, NB_NEIGHBORS, STD_RATIO)
-    # floor_pcd = remove_outliers(floor_pcd, NB_NEIGHBORS, STD_RATIO)
-    item_pcd = remove_outliers_dbscan(item_pcd, 100, 20)
-    floor_pcd = remove_outliers_dbscan(floor_pcd, 100, 20)
+
+    item_pcd = remove_outliers(item_pcd, NB_NEIGHBORS, STD_RATIO)
+    floor_pcd = remove_outliers(floor_pcd, NB_NEIGHBORS, STD_RATIO)
+
+    # item_pcd = remove_outliers_dbscan(item_pcd, 100, 20)
+    # floor_pcd = remove_outliers_dbscan(floor_pcd, 100, 20)
 
     # There are two ways to compute a bounding box. The simpler one assumes that the item is aligned with the x-y-z axis.
     # This method along side ensuring that in practice the items are actually aligned with x-y-z axis seems to be the robust one.
