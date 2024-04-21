@@ -48,6 +48,16 @@ def remove_outliers(pcd, nb_neighbors, std_ratio):
     return inlier_cloud
 
 
+def remove_outliers_dbscan(pcd, eps, min_points):
+    labels = np.array(
+        pcd.cluster_dbscan(eps=eps, min_points=min_points, print_progress=True)
+    )
+
+    inlier_cloud = pcd.select_by_index(np.where(labels != -1)[0])
+
+    return inlier_cloud
+
+
 def run(item_pcd_file_path, floor_pcd_file_path, visualize):
 
     # Lidar data is assumed to have been saved in a csv format.
@@ -67,8 +77,10 @@ def run(item_pcd_file_path, floor_pcd_file_path, visualize):
     item_pcd, floor_pcd = remove_floor(item_pcd, floor_pcd, THRESHOLD_DISTANCE)
 
     # There are points that are clearly outliers. We remove them using a statistical method (using z-score).
-    item_pcd = remove_outliers(item_pcd, NB_NEIGHBORS, STD_RATIO)
-    floor_pcd = remove_outliers(floor_pcd, NB_NEIGHBORS, STD_RATIO)
+    # item_pcd = remove_outliers(item_pcd, NB_NEIGHBORS, STD_RATIO)
+    # floor_pcd = remove_outliers(floor_pcd, NB_NEIGHBORS, STD_RATIO)
+    item_pcd = remove_outliers_dbscan(item_pcd, 100, 20)
+    floor_pcd = remove_outliers_dbscan(floor_pcd, 100, 20)
 
     # There are two ways to compute a bounding box. The simpler one assumes that the item is aligned with the x-y-z axis.
     # This method along side ensuring that in practice the items are actually aligned with x-y-z axis seems to be the robust one.
