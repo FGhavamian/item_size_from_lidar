@@ -9,7 +9,7 @@ import open3d as o3d
 THRESHOLD_DISTANCE = 10
 THRESHOLD_CONF = 150
 NB_NEIGHBORS = 20
-STD_RATIO = 0.05
+STD_RATIO = 0.01
 
 
 def read_data_from_csv(item_pcd_file_path, floor_pcd_file_path):
