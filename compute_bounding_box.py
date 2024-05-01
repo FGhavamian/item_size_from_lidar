@@ -130,7 +130,15 @@ def run(item_pcd_file_path, floor_pcd_file_path, visualize):
             [item_pcd, floor_pcd, bbox_item, bbox_floor, axis]
         )
 
-    return bbox_item
+    size = (
+        int(abs(bbox_item.max_bound[0] - bbox_item.min_bound[0])),
+        int(abs(bbox_item.max_bound[1] - bbox_item.min_bound[1])),
+        int(
+            abs(bbox_item.max_bound[2] - bbox_item.min_bound[2]),
+        ),
+    )
+
+    return size
 
 
 if __name__ == "__main__":
@@ -142,14 +150,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    bbox_item = run(args.item_file_path, args.floor_file_path, visualize=True)
-
-    size = (
-        int(abs(bbox_item.max_bound[0] - bbox_item.min_bound[0])),
-        int(abs(bbox_item.max_bound[1] - bbox_item.min_bound[1])),
-        int(
-            abs(bbox_item.max_bound[2] - bbox_item.min_bound[2]),
-        ),
-    )
+    size = run(args.item_file_path, args.floor_file_path, visualize=True)
 
     print(f"Item size: {size[0]} x {size[1]} x {size[2]} [mm]")
