@@ -67,6 +67,31 @@ def remove_outliers_dbscan(pcd, eps, min_points):
     return inlier_cloud
 
 
+def remove_item_points_outside_of_floor_plane(item_pcd, bbox_floor):
+    miny, minz = (
+        bbox_floor.min_bound[1],
+        bbox_floor.min_bound[2],
+    )
+    maxy, maxz = (
+        bbox_floor.max_bound[1],
+        bbox_floor.max_bound[2],
+    )
+
+    item_pcd_np = np.asarray(item_pcd.points)
+
+    cond = (
+        (item_pcd_np[:, 1] >= miny)
+        & (item_pcd_np[:, 1] <= maxy)
+        & (item_pcd_np[:, 2] >= minz)
+        & (item_pcd_np[:, 2] <= maxz)
+    )
+    item_pcd_np = item_pcd_np[cond]
+
+    item_pcd = convert_to_pcd(item_pcd_np)
+
+    return item_pcd
+
+
 def run(item_pcd_file_path, floor_pcd_file_path, visualize):
 
     # Lidar data is assumed to have been saved in a csv format.
@@ -103,8 +128,12 @@ def run(item_pcd_file_path, floor_pcd_file_path, visualize):
 
     # There are two ways to compute a bounding box. The simpler one assumes that the item is aligned with the x-y-z axis.
     # This method along side ensuring that in practice the items are actually aligned with x-y-z axis seems to be the robust one.
-    bbox_item = item_pcd.get_axis_aligned_bounding_box()
     bbox_floor = floor_pcd.get_axis_aligned_bounding_box()
+
+    # It appears that sometimes some points appear in the item that are outside of the floor plane. Here we remove these points
+    item_pcd = remove_item_points_outside_of_floor_plane(item_pcd, bbox_floor)
+
+    bbox_item = item_pcd.get_axis_aligned_bounding_box()
 
     # The height item's bounding box can be underestimated. This is due to the fact that lidar laser cannot read the bottom of the item.
     # To fix this underestimation, we make sure that the bottom of the item's bounding box is located on top of the floor.
